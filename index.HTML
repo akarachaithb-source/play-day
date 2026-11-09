@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family & Business Expense Dashboard - The Sun Engineering</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (XLSX) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Prompt & Itim -->
+    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background: #faf7f2; }
+        .font-cute { font-family: 'Itim', cursive; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(240, 230, 215, 0.8); }
+        .bg-zen-gradient { background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #0f172a 100%); }
+        .btn-hover { transition: all 0.25s ease; }
+        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3); }
+        
+        .user-radio-card input:checked + div {
+            border-color: #f59e0b;
+            background-color: #fffbeb;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity">
+        <div class="bg-white/95 rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 border-2 border-amber-100 text-center">
+            <div class="mb-3 flex justify-center relative">
+                <span class="absolute -top-4 right-10 text-2xl animate-bounce">🌸</span>
+                <img src="1A.png" onerror="this.onerror=null; this.src='1A.jpg'; this.parentElement.innerHTML='<div class=\'w-24 h-24 bg-gradient-to-tr from-amber-500 to-orange-400 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-lg shadow-amber-500/30\'>🏯</div>';" class="w-24 h-24 object-cover rounded-3xl shadow-lg border-2 border-amber-400">
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-1 font-cute">🏯 ครอบครัว & บริษัท The Sun 🌸</h2>
+            <p class="text-xs text-slate-500 mb-6">กรุณาเลือกผู้ใช้งานและใส่รหัส PIN</p>
+            
+            <form id="loginForm" onsubmit="event.preventDefault(); attemptLogin();">
+                <div class="flex justify-center gap-3 mb-6" id="userAvatars">
+                    <button type="button" onclick="selectLoginUser('พ่อซันเดย์', '2A')" class="user-select-btn p-2 rounded-2xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition-all flex flex-col items-center">
+                        <img src="2A.png" onerror="this.onerror=null; this.src='2A.jpg'; this.src='https://ui-avatars.com/api/?name=Sunday&background=0284c7&color=fff';" class="w-14 h-14 rounded-2xl object-cover shadow border border-amber-200">
+                        <span class="text-xs mt-1.5 font-bold text-slate-700">พ่อซันเดย์ 👨‍👩‍👧</span>
+                    </button>
+                    <button type="button" onclick="selectLoginUser('แม่ปุ๋ย', '3A')" class="user-select-btn p-2 rounded-2xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition-all flex flex-col items-center">
+                        <img src="3A.png" onerror="this.onerror=null; this.src='3A.jpg'; this.src='https://ui-avatars.com/api/?name=Pui&background=ec4899&color=fff';" class="w-14 h-14 rounded-2xl object-cover shadow border border-pink-200">
+                        <span class="text-xs mt-1.5 font-bold text-slate-700">แม่ปุ๋ย 👩‍🍳</span>
+                    </button>
+                    <button type="button" onclick="selectLoginUser('พี่กุญแจซอล', '4A')" class="user-select-btn p-2 rounded-2xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition-all flex flex-col items-center">
+                        <img src="4A.png" onerror="this.onerror=null; this.src='4A.jpg'; this.src='https://ui-avatars.com/api/?name=Sol&background=8b5cf6&color=fff';" class="w-14 h-14 rounded-2xl object-cover shadow border border-purple-200">
+                        <span class="text-xs mt-1.5 font-bold text-slate-700">พี่กุญแจซอล 👧</span>
+                    </button>
+                </div>
+
+                <input type="hidden" id="selectedUser" value="พ่อซันเดย์">
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">ใส่รหัสผ่าน PIN (6 หลัก)</label>
+                    <input type="password" id="loginPinInput" maxlength="6" class="w-full text-center text-2xl tracking-widest font-bold border-2 border-slate-200 rounded-2xl py-3.5 focus:outline-none focus:border-amber-500 transition-colors bg-slate-50" placeholder="••••••" required>
+                    <p id="loginError" class="text-rose-500 text-xs mt-2 font-medium hidden">รหัส PIN ไม่ถูกต้อง กรุณาลองอีกครั้ง</p>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-amber-500/30 btn-hover font-cute text-lg">
+                    เข้าสู่ระบบ 🎏
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- HEADER BAR -->
+    <header class="bg-zen-gradient text-white shadow-xl sticky top-0 z-40 border-b border-amber-900/40">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <img src="1A.png" onerror="this.onerror=null; this.src='1A.jpg'; this.src='https://ui-avatars.com/api/?name=1A&background=f59e0b&color=fff';" class="w-11 h-11 rounded-2xl object-cover border-2 border-amber-400 shadow">
+                    <span class="absolute -bottom-1 -right-1 text-xs">⚙️</span>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wide bg-gradient-to-r from-amber-200 via-orange-200 to-amber-100 bg-clip-text text-transparent font-cute">Family & Business Dashboard ⚙️</h1>
+                    <p class="text-xs text-amber-100/80">ระบบบันทึกรายรับ-รายจ่าย ครอบครัว & บริษัท The Sun Engineering</p>
+                </div>
+            </div>
+
+            <!-- CONTROLS & PROFILE -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <button onclick="toggleAmbientMusic()" id="bgmBtn" class="bg-slate-800/80 hover:bg-slate-700 text-amber-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 border border-slate-600 transition-all shadow-sm">
+                    <i class="fas fa-music text-amber-400"></i>
+                    <span id="bgmLabel">เพลงญี่ปุ่น: ปิด</span>
+                </button>
+
+                <label class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 cursor-pointer shadow transition-all btn-hover">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Import Excel</span>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
+                </label>
+
+                <div class="flex items-center gap-2 bg-slate-800/90 px-3.5 py-1.5 rounded-2xl border border-slate-600 shadow-inner">
+                    <img id="currentAvatar" src="2A.png" onerror="this.onerror=null; this.src='2A.jpg'; this.src='https://ui-avatars.com/api/?name=User';" class="w-8 h-8 rounded-xl object-cover border border-amber-400">
+                    <span id="currentUserName" class="text-xs font-bold text-amber-200">พ่อซันเดย์</span>
+                    <button onclick="logout()" class="ml-1 text-slate-400 hover:text-rose-400 text-xs p-1" title="ออกจากระบบ">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <!-- INCOME / EXPENSE NET SUMMARY CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="glass-card p-4 rounded-3xl shadow-sm border border-emerald-100 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                    💰
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-500 uppercase">รายได้รวมทั้งหมด</div>
+                    <div id="statTotalIncome" class="text-xl font-bold text-emerald-600">฿0.00</div>
+                </div>
+            </div>
+            <div class="glass-card p-4 rounded-3xl shadow-sm border border-rose-100 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold">
+                    💸
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-500 uppercase">รายจ่ายรวมทั้งหมด</div>
+                    <div id="statTotalExpense" class="text-xl font-bold text-rose-600">฿0.00</div>
+                </div>
+            </div>
+            <div class="glass-card p-4 rounded-3xl shadow-sm border border-amber-100 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold">
+                    ⚖️
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-500 uppercase">คงเหลือสุทธิ</div>
+                    <div id="statNetBalance" class="text-xl font-bold text-slate-800">฿0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TARGET & OVERVIEW SUMMARY -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Daily Target Card -->
+            <div class="glass-card p-5 rounded-3xl shadow-sm border border-amber-100 hover:shadow-md transition-all relative overflow-hidden">
+                <span class="absolute -right-2 -bottom-2 text-4xl opacity-10">🍱</span>
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-sun text-amber-500"></i> งบรายวัน (Daily Expense)</span>
+                    <button onclick="openTargetModal('daily')" class="text-xs text-amber-700 hover:text-amber-800 font-bold bg-amber-100/70 px-2 py-1 rounded-lg"><i class="fas fa-cog"></i> ตั้งเป้า</button>
+                </div>
+                <div class="flex justify-between items-end mb-3">
+                    <span id="sumDaily" class="text-2xl font-bold text-slate-800">฿0</span>
+                    <span class="text-xs text-slate-500 font-medium">เป้าหมาย: <span id="targetDailyVal" class="text-slate-700 font-bold">฿1,000</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                    <div id="barDaily" class="bg-gradient-to-r from-amber-400 to-orange-500 h-full w-0 rounded-full transition-all duration-700"></div>
+                </div>
+            </div>
+
+            <!-- Monthly Target Card -->
+            <div class="glass-card p-5 rounded-3xl shadow-sm border border-blue-100 hover:shadow-md transition-all relative overflow-hidden">
+                <span class="absolute -right-2 -bottom-2 text-4xl opacity-10">🗻</span>
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-moon text-blue-500"></i> งบรายเดือน (Monthly Expense)</span>
+                    <button onclick="openTargetModal('monthly')" class="text-xs text-blue-700 hover:text-blue-800 font-bold bg-blue-100/70 px-2 py-1 rounded-lg"><i class="fas fa-cog"></i> ตั้งเป้า</button>
+                </div>
+                <div class="flex justify-between items-end mb-3">
+                    <span id="sumMonthly" class="text-2xl font-bold text-slate-800">฿0</span>
+                    <span class="text-xs text-slate-500 font-medium">เป้าหมาย: <span id="targetMonthlyVal" class="text-slate-700 font-bold">฿30,000</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                    <div id="barMonthly" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-full w-0 rounded-full transition-all duration-700"></div>
+                </div>
+            </div>
+
+            <!-- Yearly Target Card -->
+            <div class="glass-card p-5 rounded-3xl shadow-sm border border-emerald-100 hover:shadow-md transition-all relative overflow-hidden">
+                <span class="absolute -right-2 -bottom-2 text-4xl opacity-10">🍵</span>
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-leaf text-emerald-500"></i> งบรายปี (Yearly Expense)</span>
+                    <button onclick="openTargetModal('yearly')" class="text-xs text-emerald-700 hover:text-emerald-800 font-bold bg-emerald-100/70 px-2 py-1 rounded-lg"><i class="fas fa-cog"></i> ตั้งเป้า</button>
+                </div>
+                <div class="flex justify-between items-end mb-3">
+                    <span id="sumYearly" class="text-2xl font-bold text-slate-800">฿0</span>
+                    <span class="text-xs text-slate-500 font-medium">เป้าหมาย: <span id="targetYearlyVal" class="text-slate-700 font-bold">฿360,000</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                    <div id="barYearly" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-full w-0 rounded-full transition-all duration-700"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM & CHART GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- EXPENSE / INCOME INPUT FORM (5 COLS) -->
+            <div class="lg:col-span-5 glass-card p-6 rounded-3xl shadow-sm border border-amber-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 font-cute text-lg">
+                        <span id="formHeaderIcon" class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">✍️</span> 
+                        <span id="formTitleText">บันทึกรายการใหม่</span> 🌸
+                    </h2>
+                    <span id="editingBadge" class="hidden text-xs font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full border border-amber-200">✏️ กำลังแก้ไข</span>
+                </div>
+
+                <!-- MODE SWITCHER: EXPENSE vs INCOME -->
+                <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl mb-4 border border-slate-200/60">
+                    <button type="button" onclick="setEntryType('expense')" id="btnTypeExpense" class="py-2 rounded-xl text-xs font-bold transition-all bg-white text-rose-600 shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fas fa-minus-circle"></i> บันทึกค่าใช้จ่าย
+                    </button>
+                    <button type="button" onclick="setEntryType('income')" id="btnTypeIncome" class="py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-emerald-600 flex items-center justify-center gap-1.5">
+                        <i class="fas fa-plus-circle"></i> บันทึกรายได้
+                    </button>
+                </div>
+
+                <form id="expenseForm" onsubmit="saveExpense(event)" class="space-y-4">
+                    <input type="hidden" id="editingRecordId" value="">
+                    
+                    <!-- USER SELECTION CARDS WITH AVATAR IMAGES -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
+                            <span>👤</span> เลือกผู้บันทึกรายการ
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- พ่อซันเดย์ Card -->
+                            <label class="user-radio-card cursor-pointer">
+                                <input type="radio" name="formUser" value="พ่อซันเดย์" checked class="hidden">
+                                <div class="p-2.5 rounded-2xl border-2 border-slate-200 bg-white flex flex-col items-center gap-1.5 transition-all text-center hover:border-amber-300">
+                                    <img src="2A.png" onerror="this.onerror=null; this.src='2A.jpg'; this.src='https://ui-avatars.com/api/?name=Sunday&background=0284c7&color=fff';" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-amber-200">
+                                    <span class="text-xs font-bold text-slate-700">พ่อซันเดย์</span>
+                                </div>
+                            </label>
+                            <!-- แม่ปุ๋ย Card -->
+                            <label class="user-radio-card cursor-pointer">
+                                <input type="radio" name="formUser" value="แม่ปุ๋ย" class="hidden">
+                                <div class="p-2.5 rounded-2xl border-2 border-slate-200 bg-white flex flex-col items-center gap-1.5 transition-all text-center hover:border-pink-300">
+                                    <img src="3A.png" onerror="this.onerror=null; this.src='3A.jpg'; this.src='https://ui-avatars.com/api/?name=Pui&background=ec4899&color=fff';" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-pink-200">
+                                    <span class="text-xs font-bold text-slate-700">แม่ปุ๋ย</span>
+                                </div>
+                            </label>
+                            <!-- พี่กุญแจซอล Card -->
+                            <label class="user-radio-card cursor-pointer">
+                                <input type="radio" name="formUser" value="พี่กุญแจซอล" class="hidden">
+                                <div class="p-2.5 rounded-2xl border-2 border-slate-200 bg-white flex flex-col items-center gap-1.5 transition-all text-center hover:border-purple-300">
+                                    <img src="4A.png" onerror="this.onerror=null; this.src='4A.jpg'; this.src='https://ui-avatars.com/api/?name=Sol&background=8b5cf6&color=fff';" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-purple-200">
+                                    <span class="text-xs font-bold text-slate-700">พี่กุญแจซอล</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Expense / Income Group -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" id="groupLabelText">กลุ่มค่าใช้จ่าย</label>
+                        <select id="formGroup" class="w-full border border-slate-200 rounded-2xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white shadow-sm font-medium">
+                            <option value="ค่าใช้จ่ายครอบครัว">🏠 ค่าใช้จ่ายครอบครัว</option>
+                            <option value="ค่าใช้จ่ายบริษัท The Sun Engineering">🏢 ค่าใช้จ่ายบริษัท The Sun Engineering</option>
+                            <option value="ค่าใช้จ่ายส่วนตัว พ่อซันเดย์">👤 ส่วนตัว พ่อซันเดย์</option>
+                            <option value="ค่าใช้จ่ายส่วนตัว แม่ปุ๋ย">👤 ส่วนตัว แม่ปุ๋ย</option>
+                            <option value="ค่าใช้จ่ายส่วนตัว พี่กุญแจซอล">👤 ส่วนตัว พี่กุญแจซอล</option>
+                            <option value="ค่าใช้จ่ายส่วนตัว พี่ไอโซ่">👤 ส่วนตัว พี่ไอโซ่</option>
+                            <option value="ค่าใช้จ่ายส่วนตัว น้องโอโซน">👤 ส่วนตัว น้องโอโซน</option>
+                        </select>
+                    </div>
+
+                    <!-- Category / Source Selector & Add New Category -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-xs font-semibold text-slate-600" id="categoryLabelText">หมวดหมู่</label>
+                            <button type="button" onclick="openAddCategoryModal()" class="text-xs text-amber-600 font-bold hover:underline">+ เพิ่มหมวดหมู่ใหม่</button>
+                        </div>
+                        <select id="formCategory" class="w-full border border-slate-200 rounded-2xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white shadow-sm font-medium">
+                            <!-- Dynamic Categories -->
+                        </select>
+                    </div>
+
+                    <!-- Amount & Date -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">จำนวนเงิน (บาท)</label>
+                            <input type="number" id="formAmount" step="0.01" min="0.01" oninput="checkAmountThreshold()" class="w-full border border-slate-200 rounded-2xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white shadow-sm font-bold text-amber-700" placeholder="0.00" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">วันที่</label>
+                            <input type="date" id="formDate" class="w-full border border-slate-200 rounded-2xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white shadow-sm" required>
+                        </div>
+                    </div>
+
+                    <!-- Slip Upload Field (Hidden by default, shows when amount > 1000) -->
+                    <div id="slipContainer" class="hidden p-4 bg-amber-50/80 border border-amber-200 rounded-2xl shadow-inner">
+                        <label class="block text-xs font-bold text-amber-900 mb-1.5"><i class="fas fa-paperclip text-amber-600"></i> แนบสลิปการโอนเงิน (ยอดเกิน 1,000 บาท)</label>
+                        <input type="file" id="formSlip" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-white hover:file:bg-amber-600 cursor-pointer">
+                    </div>
+
+                    <!-- Description Note -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">บันทึกเพิ่มเติม</label>
+                        <input type="text" id="formNote" class="w-full border border-slate-200 rounded-2xl p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white shadow-sm" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="button" id="cancelEditBtn" onclick="cancelEditing()" class="hidden w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3.5 rounded-2xl font-cute">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" id="submitBtn" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-amber-500/20 transition-all btn-hover flex items-center justify-center gap-2 font-cute text-lg">
+                            <i class="fas fa-check-circle"></i> <span id="submitBtnText">บันทึกรายการ</span> 🌾
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CHARTS SECTION (7 COLS) -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- Bar Chart Container -->
+                <div class="glass-card p-6 rounded-3xl shadow-sm border border-amber-100">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 font-cute text-lg">
+                            <span class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">📊</span> กราฟแท่งแสดงรายการ
+                        </h2>
+                        <div class="flex gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 shadow-inner">
+                            <button onclick="switchChartMode('daily')" id="btnChartDaily" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-800 shadow-sm transition-all">รายวัน</button>
+                            <button onclick="switchChartMode('monthly')" id="btnChartMonthly" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all">รายเดือน</button>
+                            <button onclick="switchChartMode('yearly')" id="btnChartYearly" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all">รายปี</button>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart Container -->
+                <div class="glass-card p-6 rounded-3xl shadow-sm border border-amber-100">
+                    <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2 font-cute text-lg">
+                        <span class="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">🍡</span> สัดส่วนสถิติตามกลุ่ม
+                    </h2>
+                    <div class="h-56 w-full flex justify-center">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSACTION HISTORY TABLE -->
+        <div class="glass-card p-6 rounded-3xl shadow-sm border border-amber-100">
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 font-cute text-lg">
+                    <span class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">📜</span> ประวัติรายการบันทึก 🌸
+                </h2>
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="filterType" onchange="renderHistoryTable()" class="text-xs border border-slate-200 rounded-2xl p-2.5 outline-none bg-white font-medium shadow-sm">
+                        <option value="ALL">-- ทุกประเภท (รับ/จ่าย) --</option>
+                        <option value="expense">💸 เฉพาะรายจ่าย</option>
+                        <option value="income">💰 เฉพาะรายได้</option>
+                    </select>
+                    <select id="filterGroup" onchange="renderHistoryTable()" class="text-xs border border-slate-200 rounded-2xl p-2.5 outline-none bg-white font-medium shadow-sm">
+                        <option value="ALL">-- ทุกกลุ่ม --</option>
+                        <option value="ค่าใช้จ่ายครอบครัว">🏠 ครอบครัว</option>
+                        <option value="ค่าใช้จ่ายบริษัท The Sun Engineering">🏢 บริษัท The Sun Engineering</option>
+                        <option value="ค่าใช้จ่ายส่วนตัว พ่อซันเดย์">ส่วนตัว พ่อซันเดย์</option>
+                        <option value="ค่าใช้จ่ายส่วนตัว แม่ปุ๋ย">ส่วนตัว แม่ปุ๋ย</option>
+                        <option value="ค่าใช้จ่ายส่วนตัว พี่กุญแจซอล">ส่วนตัว พี่กุญแจซอล</option>
+                        <option value="ค่าใช้จ่ายส่วนตัว พี่ไอโซ่">ส่วนตัว พี่ไอโซ่</option>
+                        <option value="ค่าใช้จ่ายส่วนตัว น้องโอโซน">ส่วนตัว น้องโอโซน</option>
+                    </select>
+                    <select id="filterUser" onchange="renderHistoryTable()" class="text-xs border border-slate-200 rounded-2xl p-2.5 outline-none bg-white font-medium shadow-sm">
+                        <option value="ALL">-- ทุกผู้บันทึก --</option>
+                        <option value="พ่อซันเดย์">พ่อซันเดย์</option>
+                        <option value="แม่ปุ๋ย">แม่ปุ๋ย</option>
+                        <option value="พี่กุญแจซอล">พี่กุญแจซอล</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-amber-50/80 text-amber-900 uppercase font-bold tracking-wider">
+                        <tr>
+                            <th class="p-3.5 rounded-l-2xl">วันที่</th>
+                            <th class="p-3.5">ประเภท</th>
+                            <th class="p-3.5">ผู้บันทึก</th>
+                            <th class="p-3.5">หมวดหมู่ / ที่มา</th>
+                            <th class="p-3.5">กลุ่ม</th>
+                            <th class="p-3.5">รายละเอียด</th>
+                            <th class="p-3.5 text-right">จำนวนเงิน</th>
+                            <th class="p-3.5 text-center">สลิป</th>
+                            <th class="p-3.5 text-center rounded-r-2xl">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: ADD CATEGORY -->
+    <div id="addCategoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-amber-100">
+            <h3 class="text-base font-bold text-slate-800 mb-4 font-cute text-lg">🌸 เพิ่มหมวดหมู่ใหม่</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">ชื่อหมวดหมู่</label>
+                    <input type="text" id="newCatName" class="w-full border border-slate-200 rounded-2xl p-3 text-sm outline-none focus:border-amber-500 shadow-sm" placeholder="เช่น ค่าอะไหล่จักรกล">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">ประเภท</label>
+                    <select id="newCatType" class="w-full border border-slate-200 rounded-2xl p-3 text-sm outline-none bg-white shadow-sm font-medium">
+                        <option value="expense">💸 รายจ่าย</option>
+                        <option value="income">💰 รายได้</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">เลือกไอคอน</label>
+                    <select id="newCatIcon" class="w-full border border-slate-200 rounded-2xl p-3 text-sm outline-none bg-white shadow-sm font-medium">
+                        <option value="fa-gear">⚙️ วิศวกรรม & วัสดุ</option>
+                        <option value="fa-briefcase">💼 งานประจำ / โบนัส</option>
+                        <option value="fa-building-circle-check">🏢 รายได้บริษัท</option>
+                        <option value="fa-wrench">🛠️ เครื่องมือช่าง / งานเหมา</option>
+                        <option value="fa-chart-line">📈 การลงทุน / ปันผล</option>
+                        <option value="fa-bag-shopping">🛒 ขายของออนไลน์</option>
+                        <option value="fa-truck-field">🚚 ขนส่ง/ส่งของ</option>
+                        <option value="fa-file-invoice">🧾 ภาษี/บัญชี</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeAddCategoryModal()" class="px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600">ยกเลิก</button>
+                <button onclick="saveNewCategory()" class="px-5 py-2.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-md">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SLIP VIEW -->
+    <div id="slipModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden" onclick="this.classList.add('hidden')">
+        <div class="bg-white p-5 rounded-3xl max-w-md w-full mx-4 shadow-2xl relative border border-slate-100" onclick="event.stopPropagation()">
+            <button onclick="document.getElementById('slipModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fas fa-times-circle"></i>
+            </button>
+            <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2 font-cute"><i class="fas fa-receipt text-amber-500"></i> หลักฐานสลิปการโอนเงิน</h3>
+            <img id="slipImageFull" src="" class="w-full max-h-[70vh] object-contain rounded-2xl border shadow-sm">
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const USER_PINS = {
+            "พ่อซันเดย์": "111220",
+            "แม่ปุ๋ย": "111221",
+            "พี่กุญแจซอล": "111222"
+        };
+
+        const AVATARS = {
+            "พ่อซันเดย์": "2A",
+            "แม่ปุ๋ย": "3A",
+            "พี่กุญแจซอล": "4A"
+        };
+
+        let defaultCategories = [
+            // Expense Categories
+            { id: 1, name: "บ้านกรีนพาร์ค", type: "expense", icon: "fa-house" },
+            { id: 2, name: "ค่าบ้านเบสตัน", type: "expense", icon: "fa-building-user" },
+            { id: 3, name: "ค่าส่วนกลางบ้านกรีนพาร์ค", type: "expense", icon: "fa-tree" },
+            { id: 4, name: "ค่าส่วนกลางบ้านเบสตั้น", type: "expense", icon: "fa-shield-halved" },
+            { id: 5, name: "ค่ามือถือรายเดือน", type: "expense", icon: "fa-mobile-screen-button" },
+            { id: 6, name: "ค่าน้ำประปา", type: "expense", icon: "fa-droplet" },
+            { id: 7, name: "ค่าน้ำดื่ม", type: "expense", icon: "fa-glass-water" },
+            { id: 8, name: "ค่าไฟฟ้า", type: "expense", icon: "fa-bolt" },
+            { id: 9, name: "ค่างวดรถ Isuzu", type: "expense", icon: "fa-truck-pickup" },
+            { id: 10, name: "ค่างวดรถ City", type: "expense", icon: "fa-car-side" },
+            { id: 11, name: "งานวิศวกรรม & วัสดุอุปกรณ์", type: "expense", icon: "fa-gear" },
+            { id: 12, name: "เครื่องมือช่าง & เครื่องมือวัด", type: "expense", icon: "fa-wrench" },
+            { id: 13, name: "ค่าน้ำมัน & ค่าขนส่งไซต์งาน", type: "expense", icon: "fa-truck-field" },
+            { id: 14, name: "ภาษี & ค่าบริการบัญชีบริษัท", type: "expense", icon: "fa-file-invoice" },
+            { id: 15, name: "ค่าแรงงาน & ค่ารับเหมาช่วง", type: "expense", icon: "fa-user-gear" },
+            
+            // Income Sources
+            { id: 101, name: "เงินเดือน / โบนัส", type: "income", icon: "fa-briefcase" },
+            { id: 102, name: "รายได้บริษัท The Sun Engineering", type: "income", icon: "fa-building-circle-check" },
+            { id: 103, name: "งานรับเหมา / งานฟรีแลนซ์", type: "income", icon: "fa-wrench" },
+            { id: 104, name: "เงินปันผล / การลงทุน", type: "income", icon: "fa-chart-line" },
+            { id: 105, name: "ขายของออนไลน์ / รายได้เสริม", type: "income", icon: "fa-bag-shopping" },
+            { id: 106, name: "รายได้อื่นๆ", type: "income", icon: "fa-coins" }
+        ];
+
+        let state = {
+            currentUser: "พ่อซันเดย์",
+            currentType: "expense", // 'expense' or 'income'
+            expenses: JSON.parse(localStorage.getItem('family_expenses_data')) || [],
+            categories: JSON.parse(localStorage.getItem('family_categories')) || defaultCategories,
+            targets: JSON.parse(localStorage.getItem('family_targets')) || { daily: 1000, monthly: 30000, yearly: 360000 },
+            chartMode: 'daily'
+        };
+
+        let barChartInstance = null;
+        let pieChartInstance = null;
+        let audioCtx = null;
+        let isBgmPlaying = false;
+        let bgmInterval = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('formDate').valueAsDate = new Date();
+            renderCategories();
+            renderAll();
+        });
+
+        function selectLoginUser(name, avatarKey) {
+            document.getElementById('selectedUser').value = name;
+            document.querySelectorAll('.user-select-btn').forEach(btn => btn.classList.remove('border-amber-500', 'bg-amber-50', 'shadow-md'));
+            event.currentTarget.classList.add('border-amber-500', 'bg-amber-50', 'shadow-md');
+        }
+
+        function attemptLogin() {
+            const user = document.getElementById('selectedUser').value;
+            const pin = document.getElementById('loginPinInput').value.trim();
+            const errEl = document.getElementById('loginError');
+
+            if (USER_PINS[user] === pin) {
+                state.currentUser = user;
+                document.getElementById('currentUserName').innerText = user;
+                
+                const avatarImg = document.getElementById('currentAvatar');
+                avatarImg.src = `${AVATARS[user]}.png`;
+                avatarImg.onerror = () => { avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user)}`; };
+
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('loginPinInput').value = '';
+                errEl.classList.add('hidden');
+
+                const radios = document.getElementsByName('formUser');
+                for (let r of radios) { if (r.value === user) r.checked = true; }
+
+                playTone(440, 0.2);
+            } else {
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function setEntryType(type) {
+            state.currentType = type;
+            const btnExp = document.getElementById('btnTypeExpense');
+            const btnInc = document.getElementById('btnTypeIncome');
+            const groupLabel = document.getElementById('groupLabelText');
+            const catLabel = document.getElementById('categoryLabelText');
+            const iconHeader = document.getElementById('formHeaderIcon');
+
+            if (type === 'expense') {
+                btnExp.className = "py-2 rounded-xl text-xs font-bold transition-all bg-white text-rose-600 shadow-sm flex items-center justify-center gap-1.5";
+                btnInc.className = "py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-emerald-600 flex items-center justify-center gap-1.5";
+                groupLabel.innerText = "กลุ่มค่าใช้จ่าย";
+                catLabel.innerText = "หมวดหมู่ค่าใช้จ่าย";
+                iconHeader.innerHTML = "💸";
+            } else {
+                btnInc.className = "py-2 rounded-xl text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm flex items-center justify-center gap-1.5";
+                btnExp.className = "py-2 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-rose-600 flex items-center justify-center gap-1.5";
+                groupLabel.innerText = "กลุ่มผู้รับรายได้ / บัญชี";
+                catLabel.innerText = "ที่มาของรายได้";
+                iconHeader.innerHTML = "💰";
+            }
+            renderCategories();
+        }
+
+        function checkAmountThreshold() {
+            const val = parseFloat(document.getElementById('formAmount').value) || 0;
+            const container = document.getElementById('slipContainer');
+            if (val > 1000) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('formSlip').value = '';
+            }
+        }
+
+        function saveExpense(e) {
+            e.preventDefault();
+            const recordId = document.getElementById('editingRecordId').value;
+            const formUser = document.querySelector('input[name="formUser"]:checked').value;
+            const group = document.getElementById('formGroup').value;
+            const cat = document.getElementById('formCategory').value;
+            const amount = parseFloat(document.getElementById('formAmount').value);
+            const date = document.getElementById('formDate').value;
+            const note = document.getElementById('formNote').value;
+            const slipInput = document.getElementById('formSlip');
+
+            const newRecord = {
+                id: recordId ? parseFloat(recordId) : Date.now(),
+                type: state.currentType,
+                user: formUser,
+                group: group,
+                category: cat,
+                amount: amount,
+                date: date,
+                note: note,
+                slip: null
+            };
+
+            // Retain previous slip if not re-uploaded
+            if (recordId) {
+                const existing = state.expenses.find(item => item.id === newRecord.id);
+                if (existing && existing.slip) newRecord.slip = existing.slip;
+            }
+
+            if (amount > 1000 && slipInput.files && slipInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    newRecord.slip = evt.target.result;
+                    commitSaveExpense(newRecord, !!recordId);
+                };
+                reader.readAsDataURL(slipInput.files[0]);
+            } else {
+                commitSaveExpense(newRecord, !!recordId);
+            }
+        }
+
+        function commitSaveExpense(record, isEdit) {
+            if (isEdit) {
+                const index = state.expenses.findIndex(e => e.id === record.id);
+                if (index !== -1) state.expenses[index] = record;
+            } else {
+                state.expenses.unshift(record);
+            }
+            saveState();
+            renderAll();
+            cancelEditing();
+            playJapaneseChime();
+        }
+
+        function editExpense(id) {
+            const exp = state.expenses.find(e => e.id === id);
+            if (!exp) return;
+
+            document.getElementById('editingRecordId').value = exp.id;
+            document.getElementById('editingBadge').classList.remove('hidden');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('submitBtnText').innerText = "บันทึกการแก้ไข";
+
+            setEntryType(exp.type || 'expense');
+
+            const radios = document.getElementsByName('formUser');
+            for (let r of radios) {
+                if (r.value === exp.user) r.checked = true;
+            }
+
+            document.getElementById('formGroup').value = exp.group;
+            document.getElementById('formCategory').value = exp.category;
+            document.getElementById('formAmount').value = exp.amount;
+            document.getElementById('formDate').value = exp.date;
+            document.getElementById('formNote').value = exp.note || '';
+
+            checkAmountThreshold();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEditing() {
+            document.getElementById('editingRecordId').value = '';
+            document.getElementById('editingBadge').classList.add('hidden');
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('submitBtnText').innerText = "บันทึกรายการ";
+            document.getElementById('expenseForm').reset();
+            document.getElementById('formDate').valueAsDate = new Date();
+            checkAmountThreshold();
+        }
+
+        function deleteExpense(id) {
+            if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+                state.expenses = state.expenses.filter(e => e.id !== id);
+                saveState();
+                renderAll();
+            }
+        }
+
+        function renderCategories() {
+            const select = document.getElementById('formCategory');
+            const filteredCats = state.categories.filter(c => (c.type || 'expense') === state.currentType);
+            select.innerHTML = filteredCats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        }
+
+        function openAddCategoryModal() { document.getElementById('addCategoryModal').classList.remove('hidden'); }
+        function closeAddCategoryModal() { document.getElementById('addCategoryModal').classList.add('hidden'); }
+
+        function saveNewCategory() {
+            const name = document.getElementById('newCatName').value.trim();
+            const type = document.getElementById('newCatType').value;
+            const icon = document.getElementById('newCatIcon').value;
+            if (name) {
+                state.categories.push({ id: Date.now(), name, type, icon });
+                localStorage.setItem('family_categories', JSON.stringify(state.categories));
+                renderCategories();
+                document.getElementById('formCategory').value = name;
+                closeAddCategoryModal();
+                document.getElementById('newCatName').value = '';
+            }
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                let importedCount = 0;
+                rows.forEach(row => {
+                    const date = row['วันที่'] || row['Date'] || new Date().toISOString().split('T')[0];
+                    const amount = parseFloat(row['จำนวนเงิน'] || row['Amount'] || 0);
+                    const note = row['รายการ'] || row['Description'] || '';
+                    let catName = row['หมวดหมู่'] || row['Category'] || 'ค่าใช้จ่ายอื่นๆ';
+                    let group = row['กลุ่ม'] || row['Group'] || 'ค่าใช้จ่ายครอบครัว';
+                    let user = row['ผู้บันทึก'] || row['User'] || state.currentUser;
+                    let type = (row['ประเภท'] || row['Type'] || 'expense').toLowerCase().includes('รายได้') ? 'income' : 'expense';
+
+                    if (amount > 0) {
+                        let exists = state.categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+                        if (!exists) {
+                            state.categories.push({ id: Date.now(), name: catName, type, icon: 'fa-folder-plus' });
+                        }
+
+                        state.expenses.unshift({
+                            id: Date.now() + Math.random(),
+                            type, user, group, category: catName, amount, date, note, slip: null
+                        });
+                        importedCount++;
+                    }
+                });
+
+                saveState();
+                localStorage.setItem('family_categories', JSON.stringify(state.categories));
+                renderCategories();
+                renderAll();
+                alert(`นำเข้าข้อมูลสำเร็จทั้งหมด ${importedCount} รายการ!`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderAll() {
+            renderSummaryMeter();
+            renderTargetCards();
+            renderCharts();
+            renderHistoryTable();
+        }
+
+        function renderSummaryMeter() {
+            const totalInc = state.expenses.filter(e => e.type === 'income').reduce((acc, e) => acc + e.amount, 0);
+            const totalExp = state.expenses.filter(e => (e.type || 'expense') === 'expense').reduce((acc, e) => acc + e.amount, 0);
+            const net = totalInc - totalExp;
+
+            document.getElementById('statTotalIncome').innerText = `฿${totalInc.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            document.getElementById('statTotalExpense').innerText = `฿${totalExp.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            
+            const netEl = document.getElementById('statNetBalance');
+            netEl.innerText = `฿${net.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+            if (net < 0) {
+                netEl.className = "text-xl font-bold text-rose-600";
+            } else {
+                netEl.className = "text-xl font-bold text-emerald-600";
+            }
+        }
+
+        function renderTargetCards() {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const monthStr = todayStr.substring(0, 7);
+            const yearStr = todayStr.substring(0, 4);
+
+            const dailySum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date === todayStr).reduce((acc, e) => acc + e.amount, 0);
+            const monthlySum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date.startsWith(monthStr)).reduce((acc, e) => acc + e.amount, 0);
+            const yearlySum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date.startsWith(yearStr)).reduce((acc, e) => acc + e.amount, 0);
+
+            document.getElementById('sumDaily').innerText = `฿${dailySum.toLocaleString()}`;
+            document.getElementById('sumMonthly').innerText = `฿${monthlySum.toLocaleString()}`;
+            document.getElementById('sumYearly').innerText = `฿${yearlySum.toLocaleString()}`;
+
+            document.getElementById('targetDailyVal').innerText = `฿${state.targets.daily.toLocaleString()}`;
+            document.getElementById('targetMonthlyVal').innerText = `฿${state.targets.monthly.toLocaleString()}`;
+            document.getElementById('targetYearlyVal').innerText = `฿${state.targets.yearly.toLocaleString()}`;
+
+            updateProgressBar('barDaily', dailySum, state.targets.daily);
+            updateProgressBar('barMonthly', monthlySum, state.targets.monthly);
+            updateProgressBar('barYearly', yearlySum, state.targets.yearly);
+        }
+
+        function updateProgressBar(id, current, target) {
+            const pct = Math.min((current / target) * 100, 100);
+            const bar = document.getElementById(id);
+            bar.style.width = `${pct}%`;
+            if (pct >= 100) {
+                bar.className = 'bg-gradient-to-r from-rose-500 to-red-600 h-full rounded-full transition-all duration-700';
+            } else if (pct >= 80) {
+                bar.className = 'bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-700';
+            } else {
+                bar.className = 'bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-700';
+            }
+        }
+
+        function renderHistoryTable() {
+            const fType = document.getElementById('filterType').value;
+            const fGroup = document.getElementById('filterGroup').value;
+            const fUser = document.getElementById('filterUser').value;
+
+            const filtered = state.expenses.filter(e => {
+                const matchType = (fType === 'ALL' || (e.type || 'expense') === fType);
+                const matchGroup = (fGroup === 'ALL' || e.group === fGroup);
+                const matchUser = (fUser === 'ALL' || e.user === fUser);
+                return matchType && matchGroup && matchUser;
+            });
+
+            const tbody = document.getElementById('historyTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400 font-medium">ยังไม่มีข้อมูลบันทึกในระบบ 🍃</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(e => `
+                <tr class="hover:bg-amber-50/40 transition-colors">
+                    <td class="p-3.5 font-semibold text-slate-700">${e.date}</td>
+                    <td class="p-3.5">
+                        ${e.type === 'income' 
+                            ? `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-xs"><i class="fas fa-arrow-down mr-1"></i>รายได้</span>` 
+                            : `<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-lg text-xs"><i class="fas fa-arrow-up mr-1"></i>รายจ่าย</span>`}
+                    </td>
+                    <td class="p-3.5 flex items-center gap-2">
+                        <img src="${AVATARS[e.user] || '2A'}.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(e.user)}';" class="w-6 h-6 rounded-full object-cover shadow-sm border border-amber-200">
+                        <span class="font-bold text-slate-700">${e.user}</span>
+                    </td>
+                    <td class="p-3.5"><span class="bg-amber-100/80 text-amber-900 px-2.5 py-1 rounded-xl text-xs font-bold">${e.category}</span></td>
+                    <td class="p-3.5 text-slate-500 font-medium">${e.group}</td>
+                    <td class="p-3.5 text-slate-600">${e.note || '-'}</td>
+                    <td class="p-3.5 text-right font-bold text-sm ${e.type === 'income' ? 'text-emerald-600' : 'text-amber-900'}">
+                        ${e.type === 'income' ? '+' : '-'}฿${e.amount.toLocaleString()}
+                    </td>
+                    <td class="p-3.5 text-center">
+                        ${e.slip ? `<button onclick="viewSlip('${e.slip}')" class="text-xs text-blue-600 hover:text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-lg"><i class="fas fa-image"></i> ดูสลิป</button>` : '<span class="text-slate-300">-</span>'}
+                    </td>
+                    <td class="p-3.5 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="editExpense(${e.id})" title="แก้ไข" class="text-amber-600 hover:text-amber-800 p-1.5 rounded-lg hover:bg-amber-50"><i class="fas fa-pen-to-square"></i></button>
+                            <button onclick="deleteExpense(${e.id})" title="ลบ" class="text-rose-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50"><i class="fas fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewSlip(src) {
+            document.getElementById('slipImageFull').src = src;
+            document.getElementById('slipModal').classList.remove('hidden');
+        }
+
+        function switchChartMode(mode) {
+            state.chartMode = mode;
+            ['Daily', 'Monthly', 'Yearly'].forEach(m => {
+                const btn = document.getElementById(`btnChart${m}`);
+                if (m.toLowerCase() === mode) {
+                    btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-800 shadow-sm transition-all";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all";
+                }
+            });
+            renderCharts();
+        }
+
+        function renderCharts() {
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            let labels = [], expData = [], incData = [];
+
+            if (state.chartMode === 'daily') {
+                for (let i = 13; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = d.toISOString().split('T')[0];
+                    labels.push(ds.substring(5));
+                    
+                    const expSum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date === ds).reduce((acc, e) => acc + e.amount, 0);
+                    const incSum = state.expenses.filter(e => e.type === 'income' && e.date === ds).reduce((acc, e) => acc + e.amount, 0);
+                    expData.push(expSum);
+                    incData.push(incSum);
+                }
+            } else if (state.chartMode === 'monthly') {
+                const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                labels = months;
+                const year = new Date().getFullYear().toString();
+                months.forEach((_, idx) => {
+                    const mStr = `${year}-${String(idx + 1).padStart(2, '0')}`;
+                    const expSum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date.startsWith(mStr)).reduce((acc, e) => acc + e.amount, 0);
+                    const incSum = state.expenses.filter(e => e.type === 'income' && e.date.startsWith(mStr)).reduce((acc, e) => acc + e.amount, 0);
+                    expData.push(expSum);
+                    incData.push(incSum);
+                });
+            } else {
+                labels = ['2024', '2025', '2026', '2027'];
+                labels.forEach(y => {
+                    const expSum = state.expenses.filter(e => (e.type || 'expense') === 'expense' && e.date.startsWith(y)).reduce((acc, e) => acc + e.amount, 0);
+                    const incSum = state.expenses.filter(e => e.type === 'income' && e.date.startsWith(y)).reduce((acc, e) => acc + e.amount, 0);
+                    expData.push(expSum);
+                    incData.push(incSum);
+                });
+            }
+
+            if (barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'รายจ่าย (บาท)',
+                            data: expData,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'รายได้ (บาท)',
+                            data: incData,
+                            backgroundColor: '#10b981',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            const groups = {};
+            state.expenses.forEach(e => { groups[e.group] = (groups[e.group] || 0) + e.amount; });
+
+            if (pieChartInstance) pieChartInstance.destroy();
+            pieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(groups),
+                    datasets: [{
+                        data: Object.values(groups),
+                        backgroundColor: ['#f59e0b', '#0284c7', '#10b981', '#ec4899', '#8b5cf6', '#64748b', '#d97706'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function openTargetModal(type) {
+            const newVal = prompt(`ตั้งเป้าหมายงบ${type}ใหม่ (บาท):`, state.targets[type]);
+            if (newVal && !isNaN(newVal)) {
+                state.targets[type] = parseFloat(newVal);
+                localStorage.setItem('family_targets', JSON.stringify(state.targets));
+                renderTargetCards();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('family_expenses_data', JSON.stringify(state.expenses));
+        }
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playTone(freq, duration) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playJapaneseChime() {
+            const notes = [293.66, 329.63, 440.00, 493.88, 587.33];
+            notes.forEach((freq, idx) => {
+                setTimeout(() => playTone(freq, 0.6), idx * 120);
+            });
+        }
+
+        function toggleAmbientMusic() {
+            initAudio();
+            isBgmPlaying = !isBgmPlaying;
+            const btnLabel = document.getElementById('bgmLabel');
+
+            if (isBgmPlaying) {
+                btnLabel.innerText = "เพลงญี่ปุ่น: เปิด";
+                const pentatonicScale = [220, 246.94, 293.66, 329.63, 392.00, 440];
+                bgmInterval = setInterval(() => {
+                    const note = pentatonicScale[Math.floor(Math.random() * pentatonicScale.length)];
+                    playTone(note, 1.2);
+                }, 1800);
+            } else {
+                btnLabel.innerText = "เพลงญี่ปุ่น: ปิด";
+                clearInterval(bgmInterval);
+            }
+        }
+    </script>
+</body>
+</html>
